@@ -25,6 +25,9 @@ class Message
 
     public static function ofFail(int $code, string $message): Message
     {
+        if ($code == 200) {
+            $code = 400;
+        }
         return new Message($code, $message);
     }
 

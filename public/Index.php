@@ -18,6 +18,7 @@ $validator = Validator::build()
     ->addCheck(2, Condition::build(), Message::ofFail(300, "未来魔法校"))
     ->addCheck(3, Condition::build(), Message::ofFail(400, "400错误"));
 $handleRes = $validator->handle();
-if ($handleRes->isSuccess()){
+var_dump($handleRes->getMessage());
+if ($handleRes->isSuccess()) {
     var_dump('成功');
 }

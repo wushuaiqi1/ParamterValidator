@@ -2,7 +2,6 @@
 
 namespace src;
 
-use CheckException;
 use src\factory\SampleFactory;
 
 /**
