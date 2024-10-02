@@ -2,7 +2,7 @@
 
 namespace src;
 
-use ConditionTypeException;
+use src\exception\ConditionTypeException;
 use src\factory\SampleFactory;
 
 /**
@@ -30,10 +30,10 @@ class Condition extends SampleFactory
     public function checkCondition(int|float|string $value): bool
     {
         if (is_int($value) || is_float($value) || is_double($value)) {
-            return !$this->_checkNumber($value);
+            return $this->_checkNumber($value);
         }
         if (is_string($value)) {
-            return !$this->_checkString($value);
+            return $this->_checkString($value);
         }
         return true;
     }
@@ -101,7 +101,7 @@ class Condition extends SampleFactory
         if (!isset($this->like)) {
             return true;
         }
-        return str_contains($this->contain, $value);
+        return str_contains($value, $this->contain);
     }
 
     private function _checkContains(string $value): bool
