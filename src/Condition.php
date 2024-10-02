@@ -2,6 +2,7 @@
 
 namespace src;
 
+use ConditionTypeException;
 use src\factory\SampleFactory;
 
 /**
@@ -12,69 +13,100 @@ use src\factory\SampleFactory;
  */
 class Condition extends SampleFactory
 {
-    private int|float $lessThan;
     private int|float $greaterThan;
-    private int|float|string|bool $equal;
-    private array $between;
-    private array $in;
+    private int|float $lessThan;
+    private int|float|string $equal;
+    private string|int|float $betweenLeft;
+    private string|int|float $betweenRight;
     private string $like;
     private string $contain;
+    private array $in;
 
-    public function __construct()
+    /**
+     * @desc 校验条件核心函数，目前仅支持int、float、string类型的值
+     * @param int|float|string $value
+     * @return bool
+     */
+    public function checkCondition(int|float|string $value): bool
     {
-
-    }
-
-    public function checkCondition(null|int|float|string $value)
-    {
-        if (is_int($value)){
-//            var_dump(is_integer($value));
-            $a = $this->getGreaterThan()??null;
-            var_dump($a);
-            var_dump(null!=$this->getGreaterThan() );
+        if (is_int($value) || is_float($value) || is_double($value)) {
+            return !$this->_checkNumber($value);
         }
+        if (is_string($value)) {
+            return !$this->_checkString($value);
+        }
+        return true;
     }
 
-
-
-    public function getLessThan(): float|int
+    private function _checkString(string $value): bool
     {
-        return $this->lessThan;
+        return $this->_checkEqualThan($value)
+            && $this->_checkBetween($value)
+            && $this->_checkLike($value)
+            && $this->_checkContains($value)
+            && $this->_checkIn($value);
     }
 
-    public function getGreaterThan(): float|int
+    private function _checkNumber(int|float $value): bool
     {
-        return $this->greaterThan;
+        return $this->_checkGreaterThan($value)
+            && $this->_checkLessThan($value)
+            && $this->_checkEqualThan($value)
+            && $this->_checkBetween($value)
+            && $this->_checkIn($value);
     }
 
-    public function getEqual(): float|bool|int|string
+    private function _checkGreaterThan(int|float $value): bool
     {
-        return $this->equal;
+        if (!isset($this->greaterThan)) {
+            return true;
+        }
+        return $this->greaterThan <= $value;
     }
 
-    public function getBetween(): array
+    private function _checkLessThan(int|float $value): bool
     {
-        return $this->between;
+        if (!isset($this->lessThan)) {
+            return true;
+        }
+        return $this->lessThan >= $value;
     }
 
-    public function getIn(): array
+    private function _checkEqualThan(int|float|string $value): bool
     {
-        return $this->in;
+        if (!isset($this->equal)) {
+            return true;
+        }
+        return $this->equal == $value;
     }
 
-    public function getLike(): string
+    private function _checkBetween(string|int|float $value): bool
     {
-        return $this->like;
+        if (!isset($this->betweenLeft) || !isset($this->betweenRight)) {
+            return true;
+        }
+        return ($this->betweenLeft <= $value) && ($value <= $this->betweenRight);
     }
 
-    public function getContain(): string
+    private function _checkIn(string|int|float $value): bool
     {
-        return $this->contain;
+        if (!isset($this->in)) {
+            return true;
+        }
+        return in_array($value, $this->in);
     }
 
-    public function setLessThan(float|int $lessThan): Condition
+    private function _checkLike(string $value): bool
     {
-        $this->lessThan = $lessThan;
+        if (!isset($this->like)) {
+            return true;
+        }
+        return str_contains($this->contain, $value);
+    }
+
+    private function _checkContains(string $value): bool
+    {
+        return $this->_checkLike($value);
     }
 
     public function setGreaterThan(float|int $greaterThan): Condition
@@ -83,21 +115,39 @@ class Condition extends SampleFactory
         return $this;
     }
 
-    public function setEqual(float|bool|int|string $equal): Condition
+    public function setLessThan(float|int $lessThan): Condition
+    {
+        $this->lessThan = $lessThan;
+        return $this;
+    }
+
+    public function setEqual(float|int|string $equal): Condition
     {
         $this->equal = $equal;
         return $this;
     }
 
-    public function setBetween(array $between): Condition
+    /**
+     * @throws ConditionTypeException
+     */
+    public function setBetweenLeft(float|int|string $betweenLeft): Condition
     {
-        $this->between = $between;
+        if (isset($this->betweenRight) && gettype($betweenLeft) != gettype($this->betweenRight)) {
+            throw new ConditionTypeException('两值比较，类型必须相同');
+        }
+        $this->betweenLeft = $betweenLeft;
         return $this;
     }
 
-    public function setIn(array $in): Condition
+    /**
+     * @throws ConditionTypeException
+     */
+    public function setBetweenRight(float|int|string $betweenRight): Condition
     {
-        $this->in = $in;
+        if (isset($this->betweenLeft) && gettype($betweenRight) != gettype($this->betweenLeft)) {
+            throw new ConditionTypeException('两值比较，类型必须相同');
+        }
+        $this->betweenRight = $betweenRight;
         return $this;
     }
 
@@ -110,6 +160,12 @@ class Condition extends SampleFactory
     public function setContain(string $contain): Condition
     {
         $this->contain = $contain;
+        return $this;
+    }
+
+    public function setIn(array $in): Condition
+    {
+        $this->in = $in;
         return $this;
     }
 

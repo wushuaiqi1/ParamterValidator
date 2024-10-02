@@ -2,6 +2,7 @@
 
 namespace src;
 
+use CheckException;
 use src\factory\SampleFactory;
 
 /**
@@ -12,19 +13,23 @@ use src\factory\SampleFactory;
  */
 class CheckNode extends SampleFactory
 {
-    private null|int|float|string $value;
-
+    private int|float|string $value;
     private Condition $condition;
     private Message $message;
-
     private CheckNode $nextCheckNode;
 
-
-
-    public function handleNode(CheckNode &$node)
+    /**
+     *  单节点处理
+     * @param CheckNode $node 当前节点
+     * @return Message 返回结果，校验通过返回成功，否则返回失败
+     */
+    public function handleNode(CheckNode &$node): Message
     {
-        $value = $node->getValue();
-        $node->getCondition()->checkCondition($value);
+        $checkRes = $node->getCondition()->checkCondition($node->getValue());
+        if (!$checkRes) {
+            return $this->message;
+        }
+        return Message::ofSuccess();
     }
 
 
@@ -71,7 +76,7 @@ class CheckNode extends SampleFactory
         return $this;
     }
 
-    public function getValue(): mixed
+    public function getValue(): string|int|float
     {
         return $this->value;
     }
